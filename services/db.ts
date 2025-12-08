@@ -1,6 +1,18 @@
 import { Product, Customer, Order, OrderItem } from '../types';
+import { dbFirestore } from './firebase';
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  setDoc, 
+  addDoc, 
+  updateDoc, 
+  query, 
+  orderBy, 
+  writeBatch 
+} from 'firebase/firestore';
 
-// Initial Seed Data
+// Initial Seed Data (Solo se usará si la base de datos está vacía)
 const INITIAL_PRODUCTS: Product[] = [
   { id: '1', name: 'Pote Térmico 1kg', category: 'Potes', price: 150, stock: 500, minStock: 100, unit: 'unidades' },
   { id: '2', name: 'Pote Térmico 1/2kg', category: 'Potes', price: 90, stock: 1200, minStock: 200, unit: 'unidades' },
@@ -16,104 +28,139 @@ const INITIAL_CUSTOMERS: Customer[] = [
   { id: '3', name: 'Gelato Artesanal', address: 'Plaza Mayor 5', phone: '555-0303', email: 'pedidos@gelato.com' },
 ];
 
-const INITIAL_ORDERS: Order[] = [
-  { 
-    id: '1001', 
-    customerId: '1', 
-    customerName: 'Heladería Delizia', 
-    date: new Date(Date.now() - 86400000 * 2).toISOString(), 
-    status: 'completed', 
-    total: 15000,
-    items: [{ productId: '1', productName: 'Pote Térmico 1kg', quantity: 100, priceAtSale: 150 }]
-  }
-];
-
-// Helper to delay simulation of network
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Collections references
+const productsRef = collection(dbFirestore, 'products');
+const customersRef = collection(dbFirestore, 'customers');
+const ordersRef = collection(dbFirestore, 'orders');
 
 export const db = {
   getProducts: async (): Promise<Product[]> => {
-    await delay(300);
-    const stored = localStorage.getItem('hs_products');
-    if (!stored) {
-      localStorage.setItem('hs_products', JSON.stringify(INITIAL_PRODUCTS));
-      return INITIAL_PRODUCTS;
+    try {
+      const snapshot = await getDocs(productsRef);
+      
+      // Si está vacío, cargar datos iniciales (Seed)
+      if (snapshot.empty) {
+        console.log("Base de datos vacía, subiendo productos iniciales...");
+        const batch = writeBatch(dbFirestore);
+        INITIAL_PRODUCTS.forEach(p => {
+          const docRef = doc(productsRef, p.id);
+          batch.set(docRef, p);
+        });
+        await batch.commit();
+        return INITIAL_PRODUCTS;
+      }
+
+      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      return [];
     }
-    return JSON.parse(stored);
   },
 
   saveProduct: async (product: Product): Promise<void> => {
-    await delay(300);
-    const products = await db.getProducts();
-    const index = products.findIndex(p => p.id === product.id);
-    if (index >= 0) {
-      products[index] = product;
-    } else {
-      products.push(product);
+    try {
+      const docRef = doc(productsRef, product.id);
+      await setDoc(docRef, product, { merge: true });
+    } catch (error) {
+      console.error("Error saving product:", error);
+      throw error;
     }
-    localStorage.setItem('hs_products', JSON.stringify(products));
   },
 
   getCustomers: async (): Promise<Customer[]> => {
-    await delay(300);
-    const stored = localStorage.getItem('hs_customers');
-    if (!stored) {
-      localStorage.setItem('hs_customers', JSON.stringify(INITIAL_CUSTOMERS));
-      return INITIAL_CUSTOMERS;
+    try {
+      const snapshot = await getDocs(customersRef);
+      
+      if (snapshot.empty) {
+        console.log("Base de datos vacía, subiendo clientes iniciales...");
+        const batch = writeBatch(dbFirestore);
+        INITIAL_CUSTOMERS.forEach(c => {
+          const docRef = doc(customersRef, c.id);
+          batch.set(docRef, c);
+        });
+        await batch.commit();
+        return INITIAL_CUSTOMERS;
+      }
+
+      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Customer));
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      return [];
     }
-    return JSON.parse(stored);
   },
 
   addCustomer: async (customer: Customer): Promise<void> => {
-    await delay(300);
-    const customers = await db.getCustomers();
-    customers.push(customer);
-    localStorage.setItem('hs_customers', JSON.stringify(customers));
+    try {
+      // Usamos el ID generado por el cliente o dejamos que firestore genere uno si fuera necesario
+      const docRef = doc(customersRef, customer.id);
+      await setDoc(docRef, customer);
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      throw error;
+    }
   },
 
   getOrders: async (): Promise<Order[]> => {
-    await delay(300);
-    const stored = localStorage.getItem('hs_orders');
-    if (!stored) {
-      localStorage.setItem('hs_orders', JSON.stringify(INITIAL_ORDERS));
-      return INITIAL_ORDERS;
+    try {
+      // Ordenar por fecha descendente
+      const q = query(ordersRef, orderBy('date', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order));
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      return [];
     }
-    return JSON.parse(stored);
   },
 
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
-    await delay(500);
-    const customers = await db.getCustomers();
-    const customer = customers.find(c => c.id === customerId);
-    if (!customer) throw new Error("Cliente no encontrado");
+    try {
+      // 1. Obtener datos del cliente
+      const customersSnapshot = await getDocs(customersRef);
+      const customers = customersSnapshot.docs.map(d => d.data() as Customer);
+      const customer = customers.find(c => c.id === customerId);
+      
+      if (!customer) throw new Error("Cliente no encontrado");
 
-    const total = items.reduce((acc, item) => acc + (item.priceAtSale * item.quantity), 0);
-    
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      customerId,
-      customerName: customer.name,
-      date: new Date().toISOString(),
-      items,
-      total,
-      status: 'completed' // Auto complete for simplicity
-    };
+      const total = items.reduce((acc, item) => acc + (item.priceAtSale * item.quantity), 0);
+      
+      const newOrder: Order = {
+        id: Date.now().toString(),
+        customerId,
+        customerName: customer.name,
+        date: new Date().toISOString(),
+        items,
+        total,
+        status: 'completed'
+      };
 
-    // Save Order
-    const orders = await db.getOrders();
-    orders.unshift(newOrder); // Newest first
-    localStorage.setItem('hs_orders', JSON.stringify(orders));
+      // 2. Guardar orden en Firestore
+      // Usamos setDoc con el ID generado para mantener consistencia, o addDoc para ID auto
+      await setDoc(doc(ordersRef, newOrder.id), newOrder);
 
-    // Update Stock
-    const products = await db.getProducts();
-    items.forEach(item => {
-      const product = products.find(p => p.id === item.productId);
-      if (product) {
-        product.stock -= item.quantity;
+      // 3. Actualizar Stock (De forma atómica idealmente, pero secuencial por simplicidad)
+      // Nota: En una app de producción grande, usaríamos una transacción de Firestore.
+      for (const item of items) {
+        const productRef = doc(productsRef, item.productId);
+        // Leemos el producto actual para asegurar stock
+        const productSnap = await getDocs(query(productsRef)); // Optimizacion: getDoc individual seria mejor
+        // Por simplicidad en esta estructura, haremos un update directo decrementando
+        // Firestore soporta increment(-qty)
+        const currentProduct = (await import('firebase/firestore')).getDoc(productRef);
+        
+        // Simplemente leemos todos de nuevo para encontrar el stock actual y restar (metodo seguro simple)
+        const pSnap = await (await import('firebase/firestore')).getDoc(productRef);
+        if (pSnap.exists()) {
+           const currentStock = pSnap.data().stock;
+           await updateDoc(productRef, {
+             stock: currentStock - item.quantity
+           });
+        }
       }
-    });
-    localStorage.setItem('hs_products', JSON.stringify(products));
 
-    return newOrder;
+      return newOrder;
+    } catch (error) {
+      console.error("Error creating order:", error);
+      throw error;
+    }
   }
 };

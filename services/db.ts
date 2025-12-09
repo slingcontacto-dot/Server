@@ -1,17 +1,5 @@
-import { Product, Customer, Order, OrderItem, Provider, Discount, Purchase, AppUser } from '../types';
+import { Product, Customer, Order, OrderItem, Provider, Discount, Purchase } from '../types';
 import { supabase } from './supabase';
-
-// --- DATA INICIAL / SEED DATA ---
-// Se usa solo como fallback si las tablas están vacías y se requiere estructura inicial visual
-const INITIAL_PRODUCTS: Product[] = [
-  { id: '1', name: 'Pote Térmico 1kg', category: 'Potes', price: 150, stock: 500, minStock: 100, unit: 'unidades' },
-  { id: '2', name: 'Pote Térmico 1/2kg', category: 'Potes', price: 90, stock: 1200, minStock: 200, unit: 'unidades' },
-  { id: '3', name: 'Pote Térmico 1/4kg', category: 'Potes', price: 60, stock: 80, minStock: 300, unit: 'unidades' },
-];
-
-const INITIAL_CUSTOMERS: Customer[] = [
-  { id: '1', name: 'Heladería Delizia', address: 'Av. Libertador 1234', phone: '555-0101', email: 'contacto@delizia.com' },
-];
 
 export const db = {
   // --- PRODUCTOS (Inventario) ---
@@ -109,7 +97,7 @@ export const db = {
     try { await supabase.from('orders').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
-  // --- PROVEEDORES (Conectado a DB) ---
+  // --- PROVEEDORES ---
   getProviders: async (): Promise<Provider[]> => {
      try {
         const { data, error } = await supabase.from('providers').select('*').order('name');
@@ -126,7 +114,7 @@ export const db = {
      try { await supabase.from('providers').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
-  // --- DESCUENTOS (Conectado a DB) ---
+  // --- DESCUENTOS ---
   getDiscounts: async (): Promise<Discount[]> => {
     try {
         const { data, error } = await supabase.from('discounts').select('*');
@@ -143,7 +131,7 @@ export const db = {
      try { await supabase.from('discounts').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
-  // --- COMPRAS (Conectado a DB) ---
+  // --- COMPRAS ---
   getPurchases: async (): Promise<Purchase[]> => {
       try {
         const { data, error } = await supabase.from('purchases').select('*').order('date', { ascending: false });
@@ -154,41 +142,6 @@ export const db = {
 
   savePurchase: async (purchase: Purchase): Promise<void> => {
       try { await supabase.from('purchases').upsert(purchase); } catch (e) { console.error(e); }
-  },
-
-  // --- USUARIOS (Conectado a DB) ---
-  getUsers: async (): Promise<AppUser[]> => {
-      try {
-        // Nota: Asegúrate de que la tabla se llame 'app_users' o 'users' en Supabase.
-        // Usamos 'users_app' para evitar conflictos con la tabla auth.users de Supabase
-        const { data, error } = await supabase.from('users_app').select('*'); 
-        
-        // Fallback si la tabla no existe o falla, devuelve array vacío
-        if (error) {
-             // Intento secundario con nombre 'users' si 'users_app' falla, por si acaso
-             const { data: data2, error: error2 } = await supabase.from('users').select('*');
-             if (!error2 && data2) return data2 as AppUser[];
-             throw error; 
-        }
-        return data as AppUser[];
-      } catch (e) { return []; }
-  },
-
-  saveUser: async (user: AppUser): Promise<void> => {
-      try { 
-          // Intentamos guardar en users_app (recomendado) o users
-          const { error } = await supabase.from('users_app').upsert(user);
-          if (error && error.code === '42P01') { // Tabla no existe
-              await supabase.from('users').upsert(user);
-          }
-      } catch (e) { console.error(e); }
-  },
-
-  deleteUser: async (id: string): Promise<void> => {
-      try { 
-          const { error } = await supabase.from('users_app').delete().eq('id', id);
-          if (error) await supabase.from('users').delete().eq('id', id);
-      } catch (e) { console.error(e); }
   },
 
   // --- RESTAURAR DATOS (A LA NUBE) ---
@@ -209,11 +162,6 @@ export const db = {
           }
           if (data.orders && data.orders.length > 0) {
               await supabase.from('orders').upsert(data.orders);
-          }
-          if (data.users && data.users.length > 0) {
-              // Intentamos restaurar usuarios en ambas tablas posibles por seguridad
-              await supabase.from('users_app').upsert(data.users).catch(() => {});
-              await supabase.from('users').upsert(data.users).catch(() => {});
           }
           console.log("Restauración a la nube completada");
       } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Product, Customer, Order, Provider, Discount, Purchase, AppUser } from '../types';
+import { Product, Customer, Order, Provider, Discount, Purchase } from '../types';
 import { db } from '../services/db';
 
 // Componentes 100% funcionales con estado local y llamadas a DB
@@ -327,71 +327,6 @@ export const SlingComponents = {
              )}
         </div>
      );
-  },
-
-  Users: ({ users, onUpdate }: { users: AppUser[], onUpdate: () => void }) => {
-      const [form, setForm] = useState<Partial<AppUser> | null>(null);
-
-      const save = async () => {
-          if(!form) return;
-          await db.saveUser({
-              id: form.id || Date.now().toString(),
-              username: form.username || 'usuario',
-              role: form.role || 'Empleado',
-              color: form.color || 'blue'
-          });
-          setForm(null);
-          onUpdate();
-      };
-
-      const remove = async (id: string) => {
-          if(window.confirm('Eliminar usuario?')) { await db.deleteUser(id); onUpdate(); }
-      };
-
-      return (
-         <div className="space-y-6">
-             <div className="flex justify-between items-center">
-                 <h3 className="text-xl font-bold text-slate-800">Equipo</h3>
-                 <button onClick={() => setForm({})} className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900">+ Nuevo Usuario</button>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.map(u => (
-                    <div key={u.id} className="bg-white border border-slate-200 p-6 rounded-xl flex items-center gap-4 relative shadow-sm group">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold ${u.role === 'Admin' ? 'bg-brand-600' : 'bg-slate-400'}`}>
-                             {u.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-slate-800 capitalize">{u.username}</h4>
-                            <p className="text-xs text-slate-500 uppercase">{u.role}</p>
-                        </div>
-                        <button onClick={() => remove(u.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                    </div>
-                ))}
-             </div>
-             
-             {form && (
-                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                     <div className="bg-white p-6 rounded-xl w-full max-w-sm">
-                         <h3 className="font-bold mb-4">Nuevo Usuario</h3>
-                         <div className="space-y-3">
-                             <input placeholder="Nombre de usuario" className="w-full border p-2 rounded" onChange={e => setForm({...form, username: e.target.value})} />
-                             <select className="w-full border p-2 rounded" onChange={e => setForm({...form, role: e.target.value as any})}>
-                                 <option value="Empleado">Empleado</option>
-                                 <option value="Vendedor">Vendedor</option>
-                                 <option value="Admin">Admin</option>
-                             </select>
-                         </div>
-                         <div className="flex justify-end gap-2 mt-6">
-                             <button onClick={() => setForm(null)} className="px-4 py-2 text-slate-500">Cancelar</button>
-                             <button onClick={save} className="bg-brand-600 text-white px-4 py-2 rounded">Crear</button>
-                         </div>
-                     </div>
-                 </div>
-             )}
-         </div>
-      );
   },
 
   Backup: ({ data }: { data: any }) => {

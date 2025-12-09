@@ -1,32 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { View, Product, Customer, Order, Provider, Discount, Purchase, AppUser } from './types';
+import { View, Product, Customer, Order, Provider, Discount, Purchase } from './types';
 import { db } from './services/db';
-import { auth } from './services/auth';
 import { supabase } from './services/supabase';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Customers from './components/Customers';
 import Orders from './components/Orders';
-import Login from './components/Login';
 import { SlingComponents } from './components/SlingComponents';
 
 // Icons
 const IconDashboard = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
 const IconBox = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
 const IconUsers = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
-const IconCart = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>;
-const IconLogout = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
-const IconSearch = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
 const IconPOS = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 const IconHistory = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const IconTag = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>;
 const IconTruck = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h12a1 1 0 001-1v-3a1 1 0 00-1-1H9z" /></svg>;
 const IconBriefcase = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
-const IconAdminUser = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
 const IconBackup = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>;
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
   
   // Data States
@@ -36,61 +29,48 @@ function App() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [users, setUsers] = useState<AppUser[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
   const [globalSearch, setGlobalSearch] = useState('');
-
-  useEffect(() => {
-    setIsAuthenticated(auth.isAuthenticated());
-  }, []);
 
   const showToast = (message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Supabase Realtime Setup (Optional fallback logic included for speed)
+  // Supabase Realtime Setup
   useEffect(() => {
-    if (isAuthenticated) {
       fetchData();
       
       const channel = supabase.channel('sling-realtime')
         .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-             // Re-fetch on any change to keep it simple and in-sync
              fetchData();
         })
         .subscribe();
       
       return () => { supabase.removeChannel(channel); };
-    }
-  }, [isAuthenticated]);
+  }, []);
 
   const fetchData = async () => {
     if (products.length === 0) setLoading(true);
     try {
-      const [p, c, o, prov, disc, pur, usrs] = await Promise.all([
+      const [p, c, o, prov, disc, pur] = await Promise.all([
           db.getProducts(), 
           db.getCustomers(), 
           db.getOrders(),
           db.getProviders(),
           db.getDiscounts(),
-          db.getPurchases(),
-          db.getUsers()
+          db.getPurchases()
       ]);
       setProducts(p); setCustomers(c); setOrders(o);
-      setProviders(prov); setDiscounts(disc); setPurchases(pur); setUsers(usrs);
+      setProviders(prov); setDiscounts(disc); setPurchases(pur);
     } catch (error) { 
         console.error("Error fetching data", error); 
     } finally { 
         setLoading(false); 
     }
   };
-
-  const handleLogout = () => { auth.logout(); setIsAuthenticated(false); };
-
-  if (!isAuthenticated) return <Login onLogin={() => setIsAuthenticated(true)} />;
 
   const NavItem = ({ view, label, icon: Icon }: { view: View; label: string; icon: any }) => (
     <button
@@ -151,26 +131,21 @@ function App() {
           </div>
 
           <div className="space-y-1">
-            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Admin</p>
-            <NavItem view={View.USERS} label="Usuarios" icon={IconAdminUser} />
+            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Sistema</p>
             <NavItem view={View.BACKUP} label="Backup" icon={IconBackup} />
           </div>
         </nav>
 
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3 mb-4 px-2">
+          <div className="flex items-center gap-3 px-2">
              <div className="w-9 h-9 rounded-full bg-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 font-bold text-xs">
-                AD
+                S
              </div>
              <div>
-               <p className="text-sm text-slate-800 font-bold">dueño</p>
-               <p className="text-xs text-slate-500">Administrador</p>
+               <p className="text-sm text-slate-800 font-bold">Sling System</p>
+               <p className="text-xs text-slate-500">v2.0.1</p>
              </div>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-slate-500 hover:text-red-600 text-sm px-2 w-full transition-colors">
-            <IconLogout />
-            <span>Cerrar sesión</span>
-          </button>
         </div>
       </aside>
 
@@ -188,7 +163,6 @@ function App() {
               {currentView === View.DISCOUNTS && 'Descuentos y Promociones'}
               {currentView === View.PROVIDERS && 'Lista de Proveedores'}
               {currentView === View.PURCHASES && 'Órdenes de Compra'}
-              {currentView === View.USERS && 'Administración de Usuarios'}
               {currentView === View.BACKUP && 'Respaldo y Restauración'}
            </h2>
 
@@ -202,7 +176,7 @@ function App() {
                    onChange={(e) => setGlobalSearch(e.target.value)}
                  />
                  <div className="absolute left-3 top-2.5 text-slate-400">
-                    <IconSearch />
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                  </div>
               </div>
               <div className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer relative transition-colors">
@@ -233,7 +207,6 @@ function App() {
                {currentView === View.DISCOUNTS && <SlingComponents.Discounts discounts={discounts} onUpdate={fetchData} />}
                {currentView === View.PROVIDERS && <SlingComponents.Providers providers={providers} onUpdate={fetchData} />}
                {currentView === View.PURCHASES && <SlingComponents.Purchases purchases={purchases} providers={providers} onUpdate={fetchData} />}
-               {currentView === View.USERS && <SlingComponents.Users users={users} onUpdate={fetchData} />}
                {currentView === View.BACKUP && <SlingComponents.Backup data={{products, customers, orders, providers, discounts, purchases}} />}
              </div>
            )}

@@ -11,7 +11,6 @@ export enum View {
   PROVIDERS = 'PROVIDERS',
   PURCHASES = 'PURCHASES',
   // ADMIN
-  USERS = 'USERS',
   BACKUP = 'BACKUP'
 }
 
@@ -82,11 +81,4 @@ export interface Purchase {
   providerName: string;
   status: 'Pendiente' | 'Recibida' | 'Cancelada';
   total: number;
-}
-
-export interface AppUser {
-  id: string;
-  username: string;
-  role: 'Admin' | 'Empleado' | 'Vendedor';
-  color: string;
 }

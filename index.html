@@ -16,7 +16,21 @@
                 500: '#0ea5e9',
                 600: '#2563eb', // Azul más intenso tipo Sling
                 700: '#1d4ed8',
-                900: '#0f172a', // Slate 900 para sidebar
+                900: '#0f172a',
+              }
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.3s ease-out',
+              'fade-in-down': 'fadeInDown 0.3s ease-out',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              fadeInDown: {
+                '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
               }
             }
           }
@@ -38,7 +52,7 @@
 }
 </script>
 </head>
-  <body class="bg-slate-50 text-slate-900 antialiased">
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-brand-100 selection:text-brand-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

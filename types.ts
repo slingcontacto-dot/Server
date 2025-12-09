@@ -56,3 +56,37 @@ export interface BusinessStats {
   orderCount: number;
   topProduct: string;
 }
+
+// Nuevas Interfaces
+export interface Provider {
+  id: string;
+  name: string;
+  contact: string;
+  phone: string;
+  email: string;
+  category: string;
+}
+
+export interface Discount {
+  id: string;
+  name: string;
+  description: string;
+  value: string; // ej: "10%" o "$500"
+  active: boolean;
+  color: string;
+}
+
+export interface Purchase {
+  id: string;
+  date: string;
+  providerName: string;
+  status: 'Pendiente' | 'Recibida' | 'Cancelada';
+  total: number;
+}
+
+export interface AppUser {
+  id: string;
+  username: string;
+  role: 'Admin' | 'Empleado' | 'Vendedor';
+  color: string;
+}

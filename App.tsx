@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Product, Customer, Order } from './types';
+import { View, Product, Customer, Order, Provider, Discount, Purchase, AppUser } from './types';
 import { db } from './services/db';
 import { auth } from './services/auth';
 import { supabase } from './services/supabase';
@@ -8,17 +8,15 @@ import Inventory from './components/Inventory';
 import Customers from './components/Customers';
 import Orders from './components/Orders';
 import Login from './components/Login';
-import { SlingPlaceholders } from './components/SlingComponents';
+import { SlingComponents } from './components/SlingComponents';
 
 // Icons
 const IconDashboard = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
 const IconBox = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
 const IconUsers = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
-const IconCart = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>; // Clipboard for orders
+const IconCart = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>;
 const IconLogout = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
 const IconSearch = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
-
-// New Icons
 const IconPOS = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
 const IconHistory = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 const IconTag = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>;
@@ -30,17 +28,22 @@ const IconBackup = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
+  
+  // Data States
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
+
   const [loading, setLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [notification, setNotification] = useState<string | null>(null);
   const [globalSearch, setGlobalSearch] = useState('');
 
   useEffect(() => {
-    const isAuth = auth.isAuthenticated();
-    setIsAuthenticated(isAuth);
+    setIsAuthenticated(auth.isAuthenticated());
   }, []);
 
   const showToast = (message: string) => {
@@ -48,46 +51,18 @@ function App() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Supabase Realtime Setup (Optional fallback logic included for speed)
   useEffect(() => {
     if (isAuthenticated) {
       fetchData();
-      const channel = supabase
-        .channel('heladosupply-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-            if (payload.eventType === 'DELETE') {
-              setProducts(c => c.filter(p => p.id !== payload.old.id));
-            } else if (payload.eventType === 'INSERT') {
-               setProducts(c => [...c, payload.new as Product]);
-               showToast('Nuevo producto agregado');
-            } else {
-               setProducts(c => c.map(p => p.id === payload.new.id ? payload.new as Product : p));
-               showToast(`Stock actualizado`);
-            }
+      
+      const channel = supabase.channel('sling-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+             // Re-fetch on any change to keep it simple and in-sync
+             fetchData();
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-             if (payload.eventType === 'INSERT') {
-               setOrders(c => [payload.new as Order, ...c]);
-               showToast(`Nuevo pedido recibido`);
-             } else if (payload.eventType === 'UPDATE') {
-               setOrders(c => c.map(o => o.id === payload.new.id ? payload.new as Order : o));
-             }
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, (payload) => {
-            if (payload.eventType === 'DELETE') {
-              setCustomers(c => c.filter(x => x.id !== payload.old.id));
-            } else if (payload.eventType === 'INSERT') {
-              setCustomers(c => [...c, payload.new as Customer]);
-              showToast('Nuevo cliente');
-            } else {
-              setCustomers(c => c.map(x => x.id === payload.new.id ? payload.new as Customer : x));
-              showToast('Cliente actualizado');
-            }
-        })
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') setConnectionStatus('connected');
-          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setConnectionStatus('error');
-        });
-
+        .subscribe();
+      
       return () => { supabase.removeChannel(channel); };
     }
   }, [isAuthenticated]);
@@ -95,9 +70,22 @@ function App() {
   const fetchData = async () => {
     if (products.length === 0) setLoading(true);
     try {
-      const [p, c, o] = await Promise.all([db.getProducts(), db.getCustomers(), db.getOrders()]);
+      const [p, c, o, prov, disc, pur, usrs] = await Promise.all([
+          db.getProducts(), 
+          db.getCustomers(), 
+          db.getOrders(),
+          db.getProviders(),
+          db.getDiscounts(),
+          db.getPurchases(),
+          db.getUsers()
+      ]);
       setProducts(p); setCustomers(c); setOrders(o);
-    } catch (error) { console.error("Error fetching data", error); } finally { setLoading(false); }
+      setProviders(prov); setDiscounts(disc); setPurchases(pur); setUsers(usrs);
+    } catch (error) { 
+        console.error("Error fetching data", error); 
+    } finally { 
+        setLoading(false); 
+    }
   };
 
   const handleLogout = () => { auth.logout(); setIsAuthenticated(false); };
@@ -109,75 +97,77 @@ function App() {
       onClick={() => setCurrentView(view)}
       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-all ${
         currentView === view 
-          ? 'bg-brand-600 text-white shadow-md' 
-          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          ? 'bg-brand-50 text-brand-600 font-bold shadow-sm' 
+          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
       }`}
     >
       <Icon />
-      <span className="font-medium">{label}</span>
+      <span>{label}</span>
     </button>
   );
 
   return (
-    <div className="h-screen bg-slate-900 flex font-sans overflow-hidden">
+    <div className="h-screen bg-slate-50 flex font-sans overflow-hidden">
       {/* Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in-down">
-          <div className="bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-3">
-            <div className="bg-brand-500 rounded-full p-1">
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          <div className="bg-white border border-slate-200 text-slate-800 px-4 py-3 rounded-lg shadow-xl flex items-center gap-3">
+            <div className="bg-green-100 rounded-full p-1">
+              <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
             </div>
             <span className="font-medium text-sm">{notification}</span>
           </div>
         </div>
       )}
 
-      {/* Sidebar Sling Style */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-full shrink-0">
-        <div className="p-6 pb-2">
-          <h1 className="text-3xl font-bold text-brand-600 tracking-tight">Sling</h1>
-          <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">Sistema Completo</p>
+      {/* Sidebar - Tema Claro */}
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-full shrink-0 shadow-sm z-10">
+        <div className="p-6 pb-4">
+          <h1 className="text-3xl font-black text-brand-600 tracking-tight flex items-center gap-2">
+            <span className="text-3xl">⚡</span> Sling
+          </h1>
+          <p className="text-xs text-slate-400 font-medium uppercase tracking-widest mt-1 ml-1">Sistema Multiplataforma</p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+        <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-6">
           <div className="space-y-1">
             <NavItem view={View.DASHBOARD} label="Panel de Control" icon={IconDashboard} />
             <NavItem view={View.INVENTORY} label="Inventario" icon={IconBox} />
           </div>
 
           <div className="space-y-1">
-            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ventas</p>
-            <NavItem view={View.POS} label="TPV (Caja)" icon={IconCart} />
+            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ventas</p>
+            <NavItem view={View.POS} label="TPV (Caja)" icon={IconPOS} />
             <NavItem view={View.SALES_HISTORY} label="Historial Ventas" icon={IconHistory} />
             <NavItem view={View.ORDERS} label="Pedidos" icon={IconTruck} />
             <NavItem view={View.DISCOUNTS} label="Descuentos" icon={IconTag} />
           </div>
 
           <div className="space-y-1">
-            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Gestión</p>
+            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Gestión</p>
             <NavItem view={View.CUSTOMERS} label="Clientes" icon={IconUsers} />
             <NavItem view={View.PROVIDERS} label="Proveedores" icon={IconTruck} />
             <NavItem view={View.PURCHASES} label="Compras" icon={IconBriefcase} />
           </div>
 
           <div className="space-y-1">
-            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin</p>
+            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Admin</p>
             <NavItem view={View.USERS} label="Usuarios" icon={IconAdminUser} />
             <NavItem view={View.BACKUP} label="Backup" icon={IconBackup} />
           </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-3 mb-4 px-2">
-             <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-xs">
+             <div className="w-9 h-9 rounded-full bg-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 font-bold text-xs">
                 AD
              </div>
              <div>
-               <p className="text-sm text-white font-medium">dueño</p>
-               <p className="text-xs text-slate-500">Dueño</p>
+               <p className="text-sm text-slate-800 font-bold">dueño</p>
+               <p className="text-xs text-slate-500">Administrador</p>
              </div>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm px-2">
+          <button onClick={handleLogout} className="flex items-center gap-2 text-slate-500 hover:text-red-600 text-sm px-2 w-full transition-colors">
             <IconLogout />
             <span>Cerrar sesión</span>
           </button>
@@ -185,10 +175,10 @@ function App() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
-        {/* Top Bar with Search */}
-        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-8 shrink-0">
-           <h2 className="text-white font-semibold text-lg hidden md:block">
+      <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
+        {/* Header Light */}
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 shadow-sm z-10">
+           <h2 className="text-slate-800 font-bold text-xl hidden md:block">
               {currentView === View.DASHBOARD && 'Panel de Control'}
               {currentView === View.INVENTORY && 'Inventario'}
               {currentView === View.ORDERS && 'Pedidos Especiales'}
@@ -197,7 +187,7 @@ function App() {
               {currentView === View.SALES_HISTORY && 'Historial de Ventas'}
               {currentView === View.DISCOUNTS && 'Descuentos y Promociones'}
               {currentView === View.PROVIDERS && 'Lista de Proveedores'}
-              {currentView === View.PURCHASES && 'Órdenes de Compra (Proveedores)'}
+              {currentView === View.PURCHASES && 'Órdenes de Compra'}
               {currentView === View.USERS && 'Administración de Usuarios'}
               {currentView === View.BACKUP && 'Respaldo y Restauración'}
            </h2>
@@ -206,18 +196,18 @@ function App() {
               <div className="relative w-full max-w-md">
                  <input 
                    type="text" 
-                   placeholder={currentView === View.INVENTORY ? "Buscar producto..." : "Busqueda global..."}
-                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-brand-600 transition-colors"
+                   placeholder={currentView === View.INVENTORY ? "Buscar producto..." : "Búsqueda global..."}
+                   className="w-full bg-slate-100 border border-transparent text-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all outline-none"
                    value={globalSearch}
                    onChange={(e) => setGlobalSearch(e.target.value)}
                  />
-                 <div className="absolute left-3 top-2.5 text-slate-500">
+                 <div className="absolute left-3 top-2.5 text-slate-400">
                     <IconSearch />
                  </div>
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer relative">
+              <div className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer relative transition-colors">
                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
               </div>
            </div>
         </header>
@@ -225,9 +215,9 @@ function App() {
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
            {loading ? (
-             <div className="flex items-center justify-center h-full flex-col gap-4 text-slate-500">
-                <div className="w-8 h-8 border-2 border-brand-900 border-t-brand-500 rounded-full animate-spin"></div>
-                <p>Cargando datos...</p>
+             <div className="flex items-center justify-center h-full flex-col gap-4 text-slate-400">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-brand-500 rounded-full animate-spin"></div>
+                <p className="font-medium text-slate-500">Cargando datos...</p>
              </div>
            ) : (
              <div className="max-w-7xl mx-auto space-y-6">
@@ -237,14 +227,14 @@ function App() {
                {currentView === View.CUSTOMERS && <Customers customers={customers.filter(c => c.name.toLowerCase().includes(globalSearch.toLowerCase()))} onUpdate={fetchData} />}
                {currentView === View.ORDERS && <Orders orders={orders} customers={customers} products={products} onUpdate={fetchData} />}
                
-               {/* New Sling Views */}
-               {currentView === View.POS && <SlingPlaceholders.POS products={products} customers={customers} onSale={() => { fetchData(); showToast('Venta realizada con éxito'); }} />}
-               {currentView === View.SALES_HISTORY && <SlingPlaceholders.SalesHistory orders={orders} />}
-               {currentView === View.DISCOUNTS && <SlingPlaceholders.Discounts />}
-               {currentView === View.PROVIDERS && <SlingPlaceholders.Providers />}
-               {currentView === View.PURCHASES && <SlingPlaceholders.Purchases />}
-               {currentView === View.USERS && <SlingPlaceholders.Users />}
-               {currentView === View.BACKUP && <SlingPlaceholders.Backup data={{products, customers, orders}} />}
+               {/* New Sling Views - Now Fully Functional */}
+               {currentView === View.POS && <SlingComponents.POS products={products} customers={customers} onSale={() => { fetchData(); showToast('Venta realizada con éxito'); }} />}
+               {currentView === View.SALES_HISTORY && <SlingComponents.SalesHistory orders={orders} />}
+               {currentView === View.DISCOUNTS && <SlingComponents.Discounts discounts={discounts} onUpdate={fetchData} />}
+               {currentView === View.PROVIDERS && <SlingComponents.Providers providers={providers} onUpdate={fetchData} />}
+               {currentView === View.PURCHASES && <SlingComponents.Purchases purchases={purchases} providers={providers} onUpdate={fetchData} />}
+               {currentView === View.USERS && <SlingComponents.Users users={users} onUpdate={fetchData} />}
+               {currentView === View.BACKUP && <SlingComponents.Backup data={{products, customers, orders, providers, discounts, purchases}} />}
              </div>
            )}
         </main>

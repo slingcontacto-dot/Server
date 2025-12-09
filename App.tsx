@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Product, Customer, Order } from './types';
 import { db } from './services/db';
 import { auth } from './services/auth';
+import { supabase } from './services/supabase';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Customers from './components/Customers';
@@ -29,24 +30,50 @@ function App() {
     setIsAuthenticated(isAuth);
   }, []);
 
+  // Carga inicial y Suscripción a Cambios en Tiempo Real (Realtime)
   useEffect(() => {
     if (isAuthenticated) {
       fetchData();
+
+      // Suscribirse a cambios en CUALQUIER tabla pública
+      const channel = supabase
+        .channel('db-changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public' },
+          (payload) => {
+            console.log('Cambio detectado en la nube:', payload);
+            // Cuando hay un cambio, volvemos a pedir los datos para actualizar la UI
+            fetchData();
+          }
+        )
+        .subscribe();
+
+      // Limpiar suscripción al desmontar o desloguear
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [isAuthenticated]);
 
   const fetchData = async () => {
-    setLoading(true);
-    // In a real multi-user app, this would fetch from an API
-    const [p, c, o] = await Promise.all([
-      db.getProducts(),
-      db.getCustomers(),
-      db.getOrders()
-    ]);
-    setProducts(p);
-    setCustomers(c);
-    setOrders(o);
-    setLoading(false);
+    // Solo mostrar loading la primera vez o si está vacío, para evitar parpadeos en actualizaciones realtime
+    if (products.length === 0) setLoading(true);
+    
+    try {
+      const [p, c, o] = await Promise.all([
+        db.getProducts(),
+        db.getCustomers(),
+        db.getOrders()
+      ]);
+      setProducts(p);
+      setCustomers(c);
+      setOrders(o);
+    } catch (error) {
+      console.error("Error fetching data", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -103,7 +130,7 @@ function App() {
           
           <div className="mt-4 bg-slate-50 p-3 rounded-lg text-xs text-slate-500 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span>Conectado a la nube</span>
+            <span>Conectado a Supabase Realtime</span>
           </div>
         </div>
       </aside>

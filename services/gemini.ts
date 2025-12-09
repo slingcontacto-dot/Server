@@ -2,16 +2,17 @@ import { GoogleGenAI } from "@google/genai";
 import { Product, Order } from "../types";
 
 const initGenAI = () => {
-  if (!process.env.API_KEY) {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
     console.warn("Gemini API Key missing");
     return null;
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey: apiKey });
 };
 
 export const analyzeBusinessData = async (products: Product[], recentOrders: Order[]): Promise<string> => {
   const ai = initGenAI();
-  if (!ai) return "Error: API Key no configurada. Por favor configure process.env.API_KEY.";
+  if (!ai) return "⚠️ La IA no está activa. Asegúrate de agregar la variable de entorno 'API_KEY' en Vercel con tu clave de Google Gemini.";
 
   // Prepare context data
   const lowStockItems = products.filter(p => p.stock <= p.minStock);
@@ -50,6 +51,6 @@ export const analyzeBusinessData = async (products: Product[], recentOrders: Ord
     return response.text || "No se pudo generar el análisis.";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "Ocurrió un error al contactar al asistente AI.";
+    return "Ocurrió un error al contactar al asistente AI. Verifique su API Key.";
   }
 };

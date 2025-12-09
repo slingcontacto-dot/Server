@@ -69,6 +69,13 @@ const Orders: React.FC<OrdersProps> = ({ orders, customers, products, onUpdate }
     }
   };
 
+  const handleDeleteOrder = async (id: string) => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar este pedido del historial?")) {
+      await db.deleteOrder(id);
+      onUpdate();
+    }
+  };
+
   const calculateTotal = () => cart.reduce((acc, item) => acc + (item.priceAtSale * item.quantity), 0);
 
   if (view === 'create') {
@@ -176,7 +183,7 @@ const Orders: React.FC<OrdersProps> = ({ orders, customers, products, onUpdate }
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Historial de Pedidos</h2>
-        <button onClick={() => setView('create')} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg">
+        <button onClick={() => setView('create')} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg shadow-sm">
           + Crear Nuevo Pedido
         </button>
       </div>
@@ -190,12 +197,13 @@ const Orders: React.FC<OrdersProps> = ({ orders, customers, products, onUpdate }
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Fecha</th>
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase text-center">Estado</th>
+              <th className="p-4 text-xs font-semibold text-slate-500 uppercase text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {orders.map((o) => (
               <tr key={o.id} className="hover:bg-slate-50">
-                <td className="p-4 font-mono text-xs text-slate-500">#{o.id}</td>
+                <td className="p-4 font-mono text-xs text-slate-500">#{o.id.slice(-8)}</td>
                 <td className="p-4 font-medium text-slate-800">{o.customerName}</td>
                 <td className="p-4 text-sm text-slate-600">{new Date(o.date).toLocaleDateString()}</td>
                 <td className="p-4 text-right font-bold text-slate-800">${o.total.toLocaleString()}</td>
@@ -203,6 +211,15 @@ const Orders: React.FC<OrdersProps> = ({ orders, customers, products, onUpdate }
                   <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700 capitalize">
                     {o.status}
                   </span>
+                </td>
+                <td className="p-4 text-right">
+                  <button 
+                    onClick={() => handleDeleteOrder(o.id)}
+                    className="text-slate-400 hover:text-red-600 transition-colors"
+                    title="Eliminar Pedido"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
                 </td>
               </tr>
             ))}

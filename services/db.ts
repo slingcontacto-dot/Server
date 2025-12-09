@@ -18,21 +18,18 @@ const INITIAL_CUSTOMERS: Customer[] = [
 ];
 
 export const db = {
+  // --- PRODUCTOS ---
   getProducts: async (): Promise<Product[]> => {
     try {
-      // Ordenar por nombre para estabilidad en UI
       const { data, error } = await supabase.from('products').select('*').order('name');
-      
       if (error) throw error;
 
-      // Si está vacío, cargar datos iniciales (Seed)
       if (!data || data.length === 0) {
         console.log("Base de datos vacía, subiendo productos iniciales...");
         const { error: seedError } = await supabase.from('products').insert(INITIAL_PRODUCTS);
         if (seedError) console.error("Error seeding products:", seedError);
         return INITIAL_PRODUCTS;
       }
-
       return data as Product[];
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -42,7 +39,6 @@ export const db = {
 
   saveProduct: async (product: Product): Promise<void> => {
     try {
-      // Upsert: Actualiza si existe id, crea si no
       const { error } = await supabase.from('products').upsert(product);
       if (error) throw error;
     } catch (error) {
@@ -51,10 +47,20 @@ export const db = {
     }
   },
 
+  deleteProduct: async (id: string): Promise<void> => {
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
+  },
+
+  // --- CLIENTES ---
   getCustomers: async (): Promise<Customer[]> => {
     try {
       const { data, error } = await supabase.from('customers').select('*');
-      
       if (error) throw error;
 
       if (!data || data.length === 0) {
@@ -63,7 +69,6 @@ export const db = {
         if (seedError) console.error("Error seeding customers:", seedError);
         return INITIAL_CUSTOMERS;
       }
-
       return data as Customer[];
     } catch (error) {
       console.error("Error fetching customers:", error);
@@ -71,23 +76,34 @@ export const db = {
     }
   },
 
-  addCustomer: async (customer: Customer): Promise<void> => {
+  saveCustomer: async (customer: Customer): Promise<void> => {
     try {
-      const { error } = await supabase.from('customers').insert(customer);
+      // Upsert maneja tanto Insertar como Actualizar
+      const { error } = await supabase.from('customers').upsert(customer);
       if (error) throw error;
     } catch (error) {
-      console.error("Error adding customer:", error);
+      console.error("Error saving customer:", error);
       throw error;
     }
   },
 
+  deleteCustomer: async (id: string): Promise<void> => {
+    try {
+      const { error } = await supabase.from('customers').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      throw error;
+    }
+  },
+
+  // --- PEDIDOS ---
   getOrders: async (): Promise<Order[]> => {
     try {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .order('date', { ascending: false });
-      
       if (error) throw error;
       return data as Order[];
     } catch (error) {
@@ -98,8 +114,7 @@ export const db = {
 
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
     try {
-      // 1. Validación estricta de Stock antes de procesar
-      // Recorremos los items y chequeamos el stock ACTUAL en la BD (no el local)
+      // 1. Validación estricta de Stock
       for (const item of items) {
         const { data: currentProduct, error } = await supabase
           .from('products')
@@ -112,11 +127,11 @@ export const db = {
         }
 
         if (currentProduct.stock < item.quantity) {
-          throw new Error(`Stock insuficiente para ${currentProduct.name}. Disponible: ${currentProduct.stock}, Solicitado: ${item.quantity}`);
+          throw new Error(`Stock insuficiente para ${currentProduct.name}. Disp: ${currentProduct.stock}, Solicitado: ${item.quantity}`);
         }
       }
 
-      // 2. Obtener datos del cliente
+      // 2. Obtener datos cliente
       const { data: customer } = await supabase
         .from('customers')
         .select('*')
@@ -142,9 +157,7 @@ export const db = {
       if (orderError) throw orderError;
 
       // 4. Actualizar Stock
-      // Lo hacemos uno por uno. En una app enterprise usaríamos RPC (Stored Procedure) para atomicidad total.
       for (const item of items) {
-        // Obtenemos el producto de nuevo para restar de manera segura
         const { data: product } = await supabase
           .from('products')
           .select('stock')
@@ -163,6 +176,18 @@ export const db = {
       return newOrder;
     } catch (error) {
       console.error("Error creating order:", error);
+      throw error;
+    }
+  },
+
+  deleteOrder: async (id: string): Promise<void> => {
+    try {
+      // Nota: Al borrar un pedido, no estamos devolviendo el stock automáticamente en esta versión simple.
+      // Sería ideal implementarlo si se requiere.
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error deleting order:", error);
       throw error;
     }
   }

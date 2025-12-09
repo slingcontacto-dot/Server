@@ -1,16 +1,5 @@
 import { Product, Customer, Order, OrderItem } from '../types';
-import { dbFirestore } from './firebase';
-import { 
-  collection, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  addDoc, 
-  updateDoc, 
-  query, 
-  orderBy, 
-  writeBatch 
-} from 'firebase/firestore';
+import { supabase } from './supabase';
 
 // Initial Seed Data (Solo se usará si la base de datos está vacía)
 const INITIAL_PRODUCTS: Product[] = [
@@ -28,29 +17,22 @@ const INITIAL_CUSTOMERS: Customer[] = [
   { id: '3', name: 'Gelato Artesanal', address: 'Plaza Mayor 5', phone: '555-0303', email: 'pedidos@gelato.com' },
 ];
 
-// Collections references
-const productsRef = collection(dbFirestore, 'products');
-const customersRef = collection(dbFirestore, 'customers');
-const ordersRef = collection(dbFirestore, 'orders');
-
 export const db = {
   getProducts: async (): Promise<Product[]> => {
     try {
-      const snapshot = await getDocs(productsRef);
+      const { data, error } = await supabase.from('products').select('*');
       
+      if (error) throw error;
+
       // Si está vacío, cargar datos iniciales (Seed)
-      if (snapshot.empty) {
+      if (!data || data.length === 0) {
         console.log("Base de datos vacía, subiendo productos iniciales...");
-        const batch = writeBatch(dbFirestore);
-        INITIAL_PRODUCTS.forEach(p => {
-          const docRef = doc(productsRef, p.id);
-          batch.set(docRef, p);
-        });
-        await batch.commit();
+        const { error: seedError } = await supabase.from('products').insert(INITIAL_PRODUCTS);
+        if (seedError) console.error("Error seeding products:", seedError);
         return INITIAL_PRODUCTS;
       }
 
-      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
+      return data as Product[];
     } catch (error) {
       console.error("Error fetching products:", error);
       return [];
@@ -59,8 +41,9 @@ export const db = {
 
   saveProduct: async (product: Product): Promise<void> => {
     try {
-      const docRef = doc(productsRef, product.id);
-      await setDoc(docRef, product, { merge: true });
+      // Upsert: Actualiza si existe id, crea si no
+      const { error } = await supabase.from('products').upsert(product);
+      if (error) throw error;
     } catch (error) {
       console.error("Error saving product:", error);
       throw error;
@@ -69,20 +52,18 @@ export const db = {
 
   getCustomers: async (): Promise<Customer[]> => {
     try {
-      const snapshot = await getDocs(customersRef);
+      const { data, error } = await supabase.from('customers').select('*');
       
-      if (snapshot.empty) {
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
         console.log("Base de datos vacía, subiendo clientes iniciales...");
-        const batch = writeBatch(dbFirestore);
-        INITIAL_CUSTOMERS.forEach(c => {
-          const docRef = doc(customersRef, c.id);
-          batch.set(docRef, c);
-        });
-        await batch.commit();
+        const { error: seedError } = await supabase.from('customers').insert(INITIAL_CUSTOMERS);
+        if (seedError) console.error("Error seeding customers:", seedError);
         return INITIAL_CUSTOMERS;
       }
 
-      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Customer));
+      return data as Customer[];
     } catch (error) {
       console.error("Error fetching customers:", error);
       return [];
@@ -91,9 +72,8 @@ export const db = {
 
   addCustomer: async (customer: Customer): Promise<void> => {
     try {
-      // Usamos el ID generado por el cliente o dejamos que firestore genere uno si fuera necesario
-      const docRef = doc(customersRef, customer.id);
-      await setDoc(docRef, customer);
+      const { error } = await supabase.from('customers').insert(customer);
+      if (error) throw error;
     } catch (error) {
       console.error("Error adding customer:", error);
       throw error;
@@ -102,10 +82,13 @@ export const db = {
 
   getOrders: async (): Promise<Order[]> => {
     try {
-      // Ordenar por fecha descendente
-      const q = query(ordersRef, orderBy('date', 'desc'));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order));
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      return data as Order[];
     } catch (error) {
       console.error("Error fetching orders:", error);
       return [];
@@ -115,9 +98,11 @@ export const db = {
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
     try {
       // 1. Obtener datos del cliente
-      const customersSnapshot = await getDocs(customersRef);
-      const customers = customersSnapshot.docs.map(d => d.data() as Customer);
-      const customer = customers.find(c => c.id === customerId);
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', customerId)
+        .single();
       
       if (!customer) throw new Error("Cliente no encontrado");
 
@@ -128,32 +113,31 @@ export const db = {
         customerId,
         customerName: customer.name,
         date: new Date().toISOString(),
-        items,
+        items, // Supabase maneja JSONB automáticamente
         total,
         status: 'completed'
       };
 
-      // 2. Guardar orden en Firestore
-      // Usamos setDoc con el ID generado para mantener consistencia, o addDoc para ID auto
-      await setDoc(doc(ordersRef, newOrder.id), newOrder);
+      // 2. Guardar orden
+      const { error: orderError } = await supabase.from('orders').insert(newOrder);
+      if (orderError) throw orderError;
 
-      // 3. Actualizar Stock (De forma atómica idealmente, pero secuencial por simplicidad)
-      // Nota: En una app de producción grande, usaríamos una transacción de Firestore.
+      // 3. Actualizar Stock
+      // Nota: Idealmente usaríamos una función RPC en postgres, pero lo haremos en cliente por simplicidad
       for (const item of items) {
-        const productRef = doc(productsRef, item.productId);
-        // Leemos el producto actual para asegurar stock
-        const productSnap = await getDocs(query(productsRef)); // Optimizacion: getDoc individual seria mejor
-        // Por simplicidad en esta estructura, haremos un update directo decrementando
-        // Firestore soporta increment(-qty)
-        const currentProduct = (await import('firebase/firestore')).getDoc(productRef);
-        
-        // Simplemente leemos todos de nuevo para encontrar el stock actual y restar (metodo seguro simple)
-        const pSnap = await (await import('firebase/firestore')).getDoc(productRef);
-        if (pSnap.exists()) {
-           const currentStock = pSnap.data().stock;
-           await updateDoc(productRef, {
-             stock: currentStock - item.quantity
-           });
+        // Leer stock actual
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', item.productId)
+          .single();
+          
+        if (product) {
+          const newStock = product.stock - item.quantity;
+          await supabase
+            .from('products')
+            .update({ stock: newStock })
+            .eq('id', item.productId);
         }
       }
 

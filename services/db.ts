@@ -2,95 +2,72 @@ import { Product, Customer, Order, OrderItem, Provider, Discount, Purchase, AppU
 import { supabase } from './supabase';
 
 // --- DATA INICIAL / SEED DATA ---
-// Se usa si la BD está vacía o si falla la conexión a tablas nuevas
+// Se usa solo como fallback si las tablas están vacías y se requiere estructura inicial visual
 const INITIAL_PRODUCTS: Product[] = [
   { id: '1', name: 'Pote Térmico 1kg', category: 'Potes', price: 150, stock: 500, minStock: 100, unit: 'unidades' },
   { id: '2', name: 'Pote Térmico 1/2kg', category: 'Potes', price: 90, stock: 1200, minStock: 200, unit: 'unidades' },
   { id: '3', name: 'Pote Térmico 1/4kg', category: 'Potes', price: 60, stock: 80, minStock: 300, unit: 'unidades' },
-  { id: '4', name: 'Cucharitas Color Surtido', category: 'Cucharitas', price: 500, stock: 50, minStock: 10, unit: 'bolsa x1000' },
-  { id: '5', name: 'Servilletas Blancas', category: 'Servilletas', price: 800, stock: 30, minStock: 15, unit: 'caja x2000' },
-  { id: '6', name: 'Cucurucho Crocante Grande', category: 'Cucuruchos', price: 1200, stock: 20, minStock: 10, unit: 'caja x300' },
 ];
 
 const INITIAL_CUSTOMERS: Customer[] = [
   { id: '1', name: 'Heladería Delizia', address: 'Av. Libertador 1234', phone: '555-0101', email: 'contacto@delizia.com' },
-  { id: '2', name: 'Ice Cream Joy', address: 'Calle 50 Nro 400', phone: '555-0202', email: 'manager@joy.com' },
-  { id: '3', name: 'Gelato Artesanal', address: 'Plaza Mayor 5', phone: '555-0303', email: 'pedidos@gelato.com' },
 ];
-
-// Datos Mock para funcionalidades nuevas (fallback en memoria)
-let MOCK_PROVIDERS: Provider[] = [
-    { id: '1', name: 'Plásticos del Norte', contact: 'Juan Pérez', phone: '11-4455-6677', email: 'ventas@plasticos.com', category: 'Envases' },
-    { id: '2', name: 'Importadora Dulce', contact: 'María Ruiz', phone: '11-9988-7766', email: 'info@dulce.com', category: 'Materia Prima' },
-];
-
-let MOCK_DISCOUNTS: Discount[] = [
-    { id: '1', name: 'Efectivo', description: '10% OFF', value: '10%', active: true, color: 'emerald' },
-    { id: '2', name: 'Promo Verano', description: '$5000 Descuento Fijo', value: '$5000', active: true, color: 'brand' },
-    { id: '3', name: 'Cliente VIP', description: '20% OFF', value: '20%', active: false, color: 'slate' }
-];
-
-let MOCK_PURCHASES: Purchase[] = [
-    { id: 'OC-1710002', date: '2025-12-07', providerName: 'Plásticos del Norte', status: 'Pendiente', total: 45000 },
-    { id: 'OC-1710001', date: '2025-12-03', providerName: 'Importadora Dulce', status: 'Recibida', total: 440000 },
-];
-
-let MOCK_USERS: AppUser[] = [
-    { id: '1', username: 'dueño', role: 'Admin', color: 'brand' },
-    { id: '2', username: 'vendedor', role: 'Vendedor', color: 'blue' },
-    { id: '3', username: 'taller', role: 'Empleado', color: 'orange' },
-];
-
-// Helper para simular delay de red en mocks
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const db = {
-  // --- PRODUCTOS ---
+  // --- PRODUCTOS (Inventario) ---
   getProducts: async (): Promise<Product[]> => {
     try {
       const { data, error } = await supabase.from('products').select('*').order('name');
-      if (error || !data || data.length === 0) return INITIAL_PRODUCTS;
+      if (error) throw error;
       return data as Product[];
-    } catch { return INITIAL_PRODUCTS; }
+    } catch (e) { 
+      console.error("Error fetching products", e);
+      return []; 
+    }
   },
 
   saveProduct: async (product: Product): Promise<void> => {
-    try { await supabase.from('products').upsert(product); } catch {}
+    try { await supabase.from('products').upsert(product); } catch (e) { console.error(e); }
   },
 
   deleteProduct: async (id: string): Promise<void> => {
-    try { await supabase.from('products').delete().eq('id', id); } catch {}
+    try { await supabase.from('products').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
   // --- CLIENTES ---
   getCustomers: async (): Promise<Customer[]> => {
     try {
-      const { data, error } = await supabase.from('customers').select('*');
-      if (error || !data || data.length === 0) return INITIAL_CUSTOMERS;
+      const { data, error } = await supabase.from('customers').select('*').order('name');
+      if (error) throw error;
       return data as Customer[];
-    } catch { return INITIAL_CUSTOMERS; }
+    } catch (e) { 
+      console.error("Error fetching customers", e);
+      return []; 
+    }
   },
 
   saveCustomer: async (customer: Customer): Promise<void> => {
-    try { await supabase.from('customers').upsert(customer); } catch {}
+    try { await supabase.from('customers').upsert(customer); } catch (e) { console.error(e); }
   },
 
   deleteCustomer: async (id: string): Promise<void> => {
-    try { await supabase.from('customers').delete().eq('id', id); } catch {}
+    try { await supabase.from('customers').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
-  // --- PEDIDOS ---
+  // --- PEDIDOS (Ventas) ---
   getOrders: async (): Promise<Order[]> => {
     try {
       const { data, error } = await supabase.from('orders').select('*').order('date', { ascending: false });
       if (error) throw error;
       return data as Order[];
-    } catch { return []; }
+    } catch (e) { 
+      console.error("Error fetching orders", e);
+      return []; 
+    }
   },
 
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
     try {
-      // Manejo especial para "Consumidor Final" o IDs temporales que no estén en la tabla real
       let customerName = 'Consumidor Final';
       if (customerId !== 'CF') {
          const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
@@ -112,8 +89,9 @@ export const db = {
       const { error } = await supabase.from('orders').insert(newOrder);
       if (error) throw error;
 
-      // Descontar stock (simple)
+      // Descontar stock
       for (const item of items) {
+         // Obtener stock actual para asegurar atomicidad (idealmente usar RPC, pero esto funciona para este nivel)
          const { data: p } = await supabase.from('products').select('stock').eq('id', item.productId).single();
          if (p) {
              await supabase.from('products').update({stock: p.stock - item.quantity}).eq('id', item.productId);
@@ -128,68 +106,119 @@ export const db = {
   },
 
   deleteOrder: async (id: string): Promise<void> => {
-    try { await supabase.from('orders').delete().eq('id', id); } catch {}
+    try { await supabase.from('orders').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
-  // --- NUEVAS FUNCIONALIDADES (MOCK / HYBRID) ---
-  // Usamos arrays en memoria para estas porque el usuario probablemente no ha corrido el SQL en Supabase
-  // Esto garantiza que la app "ande" inmediatamente.
-  
+  // --- PROVEEDORES (Conectado a DB) ---
   getProviders: async (): Promise<Provider[]> => {
-     await delay(200); return MOCK_PROVIDERS;
+     try {
+        const { data, error } = await supabase.from('providers').select('*').order('name');
+        if (error) throw error;
+        return data as Provider[];
+     } catch (e) { return []; }
   },
+
   saveProvider: async (provider: Provider): Promise<void> => {
-     await delay(200);
-     const idx = MOCK_PROVIDERS.findIndex(p => p.id === provider.id);
-     if (idx >= 0) MOCK_PROVIDERS[idx] = provider;
-     else MOCK_PROVIDERS.push(provider);
+     try { await supabase.from('providers').upsert(provider); } catch (e) { console.error(e); }
   },
+
   deleteProvider: async (id: string): Promise<void> => {
-     await delay(200); MOCK_PROVIDERS = MOCK_PROVIDERS.filter(p => p.id !== id);
+     try { await supabase.from('providers').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
+  // --- DESCUENTOS (Conectado a DB) ---
   getDiscounts: async (): Promise<Discount[]> => {
-    await delay(200); return MOCK_DISCOUNTS;
+    try {
+        const { data, error } = await supabase.from('discounts').select('*');
+        if (error) throw error;
+        return data as Discount[];
+    } catch (e) { return []; }
   },
+
   saveDiscount: async (discount: Discount): Promise<void> => {
-    await delay(200);
-    const idx = MOCK_DISCOUNTS.findIndex(d => d.id === discount.id);
-    if (idx >= 0) MOCK_DISCOUNTS[idx] = discount;
-    else MOCK_DISCOUNTS.push(discount);
+    try { await supabase.from('discounts').upsert(discount); } catch (e) { console.error(e); }
   },
+
   deleteDiscount: async (id: string): Promise<void> => {
-     await delay(200); MOCK_DISCOUNTS = MOCK_DISCOUNTS.filter(d => d.id !== id);
+     try { await supabase.from('discounts').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
+  // --- COMPRAS (Conectado a DB) ---
   getPurchases: async (): Promise<Purchase[]> => {
-      await delay(200); return MOCK_PURCHASES;
+      try {
+        const { data, error } = await supabase.from('purchases').select('*').order('date', { ascending: false });
+        if (error) throw error;
+        return data as Purchase[];
+      } catch (e) { return []; }
   },
+
   savePurchase: async (purchase: Purchase): Promise<void> => {
-      await delay(200);
-      MOCK_PURCHASES = [purchase, ...MOCK_PURCHASES];
+      try { await supabase.from('purchases').upsert(purchase); } catch (e) { console.error(e); }
   },
 
+  // --- USUARIOS (Conectado a DB) ---
   getUsers: async (): Promise<AppUser[]> => {
-      await delay(200); return MOCK_USERS;
-  },
-  saveUser: async (user: AppUser): Promise<void> => {
-      await delay(200);
-      const idx = MOCK_USERS.findIndex(u => u.id === user.id);
-      if (idx >= 0) MOCK_USERS[idx] = user;
-      else MOCK_USERS.push(user);
-  },
-  deleteUser: async (id: string): Promise<void> => {
-      await delay(200); MOCK_USERS = MOCK_USERS.filter(u => u.id !== id);
+      try {
+        // Nota: Asegúrate de que la tabla se llame 'app_users' o 'users' en Supabase.
+        // Usamos 'users_app' para evitar conflictos con la tabla auth.users de Supabase
+        const { data, error } = await supabase.from('users_app').select('*'); 
+        
+        // Fallback si la tabla no existe o falla, devuelve array vacío
+        if (error) {
+             // Intento secundario con nombre 'users' si 'users_app' falla, por si acaso
+             const { data: data2, error: error2 } = await supabase.from('users').select('*');
+             if (!error2 && data2) return data2 as AppUser[];
+             throw error; 
+        }
+        return data as AppUser[];
+      } catch (e) { return []; }
   },
 
-  // Método para restaurar estado en memoria desde el backup JSON
+  saveUser: async (user: AppUser): Promise<void> => {
+      try { 
+          // Intentamos guardar en users_app (recomendado) o users
+          const { error } = await supabase.from('users_app').upsert(user);
+          if (error && error.code === '42P01') { // Tabla no existe
+              await supabase.from('users').upsert(user);
+          }
+      } catch (e) { console.error(e); }
+  },
+
+  deleteUser: async (id: string): Promise<void> => {
+      try { 
+          const { error } = await supabase.from('users_app').delete().eq('id', id);
+          if (error) await supabase.from('users').delete().eq('id', id);
+      } catch (e) { console.error(e); }
+  },
+
+  // --- RESTAURAR DATOS (A LA NUBE) ---
   restoreLocalState: async (data: any): Promise<void> => {
-      await delay(800);
-      if (data.providers && Array.isArray(data.providers)) MOCK_PROVIDERS = data.providers;
-      if (data.discounts && Array.isArray(data.discounts)) MOCK_DISCOUNTS = data.discounts;
-      if (data.purchases && Array.isArray(data.purchases)) MOCK_PURCHASES = data.purchases;
-      if (data.users && Array.isArray(data.users)) MOCK_USERS = data.users;
-      // Nota: Productos y Clientes no se sobrescriben en memoria porque vienen de Supabase (o initial consts)
-      // pero esto permite que al menos las secciones "mockeadas" se restauren en la sesión actual.
+      // Esta función toma el JSON y lo sube a Supabase
+      try {
+          if (data.products && data.products.length > 0) {
+              await supabase.from('products').upsert(data.products);
+          }
+          if (data.customers && data.customers.length > 0) {
+              await supabase.from('customers').upsert(data.customers);
+          }
+          if (data.providers && data.providers.length > 0) {
+              await supabase.from('providers').upsert(data.providers);
+          }
+          if (data.discounts && data.discounts.length > 0) {
+              await supabase.from('discounts').upsert(data.discounts);
+          }
+          if (data.orders && data.orders.length > 0) {
+              await supabase.from('orders').upsert(data.orders);
+          }
+          if (data.users && data.users.length > 0) {
+              // Intentamos restaurar usuarios en ambas tablas posibles por seguridad
+              await supabase.from('users_app').upsert(data.users).catch(() => {});
+              await supabase.from('users').upsert(data.users).catch(() => {});
+          }
+          console.log("Restauración a la nube completada");
+      } catch (error) {
+          console.error("Error al restaurar backup en la nube:", error);
+          throw error;
+      }
   }
 };

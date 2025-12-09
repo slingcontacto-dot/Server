@@ -20,7 +20,8 @@ const INITIAL_CUSTOMERS: Customer[] = [
 export const db = {
   getProducts: async (): Promise<Product[]> => {
     try {
-      const { data, error } = await supabase.from('products').select('*');
+      // Ordenar por nombre para estabilidad en UI
+      const { data, error } = await supabase.from('products').select('*').order('name');
       
       if (error) throw error;
 
@@ -97,7 +98,25 @@ export const db = {
 
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
     try {
-      // 1. Obtener datos del cliente
+      // 1. Validación estricta de Stock antes de procesar
+      // Recorremos los items y chequeamos el stock ACTUAL en la BD (no el local)
+      for (const item of items) {
+        const { data: currentProduct, error } = await supabase
+          .from('products')
+          .select('stock, name')
+          .eq('id', item.productId)
+          .single();
+
+        if (error || !currentProduct) {
+          throw new Error(`Error verificando producto: ${item.productName}`);
+        }
+
+        if (currentProduct.stock < item.quantity) {
+          throw new Error(`Stock insuficiente para ${currentProduct.name}. Disponible: ${currentProduct.stock}, Solicitado: ${item.quantity}`);
+        }
+      }
+
+      // 2. Obtener datos del cliente
       const { data: customer } = await supabase
         .from('customers')
         .select('*')
@@ -113,19 +132,19 @@ export const db = {
         customerId,
         customerName: customer.name,
         date: new Date().toISOString(),
-        items, // Supabase maneja JSONB automáticamente
+        items, 
         total,
         status: 'completed'
       };
 
-      // 2. Guardar orden
+      // 3. Guardar orden
       const { error: orderError } = await supabase.from('orders').insert(newOrder);
       if (orderError) throw orderError;
 
-      // 3. Actualizar Stock
-      // Nota: Idealmente usaríamos una función RPC en postgres, pero lo haremos en cliente por simplicidad
+      // 4. Actualizar Stock
+      // Lo hacemos uno por uno. En una app enterprise usaríamos RPC (Stored Procedure) para atomicidad total.
       for (const item of items) {
-        // Leer stock actual
+        // Obtenemos el producto de nuevo para restar de manera segura
         const { data: product } = await supabase
           .from('products')
           .select('stock')

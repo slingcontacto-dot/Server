@@ -23,33 +23,79 @@ function App() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [notification, setNotification] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check auth status on load
     const isAuth = auth.isAuthenticated();
     setIsAuthenticated(isAuth);
   }, []);
 
-  // Carga inicial y Suscripción a Cambios en Tiempo Real (Realtime)
+  // Función auxiliar para mostrar notificaciones temporales
+  const showToast = (message: string) => {
+    setNotification(message);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Carga inicial y Suscripción Granular
   useEffect(() => {
     if (isAuthenticated) {
+      // 1. Carga inicial completa
       fetchData();
 
-      // Suscribirse a cambios en CUALQUIER tabla pública
+      // 2. Suscripción a Realtime con lógica granular para velocidad instantánea
       const channel = supabase
-        .channel('db-changes')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public' },
-          (payload) => {
-            console.log('Cambio detectado en la nube:', payload);
-            // Cuando hay un cambio, volvemos a pedir los datos para actualizar la UI
-            fetchData();
+        .channel('heladosupply-realtime')
+        
+        // --- PRODUCTOS ---
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload) => {
+            const newProduct = payload.new as Product;
+            setProducts((current) => current.map((p) => (p.id === newProduct.id ? newProduct : p)));
+            showToast(`Stock actualizado: ${newProduct.name}`);
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload) => {
+            setProducts((current) => [...current, payload.new as Product]);
+            showToast('Nuevo producto agregado remotamente');
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload) => {
+            setProducts((current) => current.filter(p => p.id !== payload.old.id));
+        })
+        
+        // --- PEDIDOS ---
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+            const newOrder = payload.new as Order;
+            setOrders((current) => [newOrder, ...current]);
+            showToast(`Nuevo pedido recibido: $${newOrder.total}`);
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+            const updatedOrder = payload.new as Order;
+            setOrders((current) => current.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+        })
+        
+        // --- CLIENTES (Optimizado) ---
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'customers' }, (payload) => {
+             setCustomers((current) => [...current, payload.new as Customer]);
+             showToast('Nuevo cliente registrado');
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'customers' }, (payload) => {
+             const updated = payload.new as Customer;
+             setCustomers((current) => current.map(c => c.id === updated.id ? updated : c));
+             showToast('Datos de cliente actualizados');
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'customers' }, (payload) => {
+             setCustomers((current) => current.filter(c => c.id !== payload.old.id));
+        })
+        
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setConnectionStatus('connected');
+            console.log('Sincronización en tiempo real activa.');
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setConnectionStatus('error');
+            console.error('Error de conexión Realtime:', status);
           }
-        )
-        .subscribe();
+        });
 
-      // Limpiar suscripción al desmontar o desloguear
       return () => {
         supabase.removeChannel(channel);
       };
@@ -57,9 +103,7 @@ function App() {
   }, [isAuthenticated]);
 
   const fetchData = async () => {
-    // Solo mostrar loading la primera vez o si está vacío, para evitar parpadeos en actualizaciones realtime
     if (products.length === 0) setLoading(true);
-    
     try {
       const [p, c, o] = await Promise.all([
         db.getProducts(),
@@ -101,6 +145,20 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-50 animate-fade-in-down">
+          <div className="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <div className="bg-green-500 rounded-full p-1">
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="font-medium text-sm">{notification}</span>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 fixed h-full z-10 hidden md:flex flex-col">
         <div className="p-6 border-b border-slate-100">
@@ -128,9 +186,11 @@ function App() {
             <span>Cerrar Sesión</span>
           </button>
           
-          <div className="mt-4 bg-slate-50 p-3 rounded-lg text-xs text-slate-500 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span>Conectado a Supabase Realtime</span>
+          <div className="mt-4 bg-slate-50 p-3 rounded-lg text-xs flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <span className="text-slate-500">
+              {connectionStatus === 'connected' ? 'En vivo (Realtime)' : 'Desconectado'}
+            </span>
           </div>
         </div>
       </aside>

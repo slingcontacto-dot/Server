@@ -90,8 +90,12 @@ export const db = {
 
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
     try {
-      const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
-      const customerName = customer ? customer.name : 'Cliente';
+      // Manejo especial para "Consumidor Final" o IDs temporales que no estén en la tabla real
+      let customerName = 'Consumidor Final';
+      if (customerId !== 'CF') {
+         const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
+         if (customer) customerName = customer.name;
+      }
 
       const total = items.reduce((acc, item) => acc + (item.priceAtSale * item.quantity), 0);
       
@@ -176,5 +180,16 @@ export const db = {
   },
   deleteUser: async (id: string): Promise<void> => {
       await delay(200); MOCK_USERS = MOCK_USERS.filter(u => u.id !== id);
+  },
+
+  // Método para restaurar estado en memoria desde el backup JSON
+  restoreLocalState: async (data: any): Promise<void> => {
+      await delay(800);
+      if (data.providers && Array.isArray(data.providers)) MOCK_PROVIDERS = data.providers;
+      if (data.discounts && Array.isArray(data.discounts)) MOCK_DISCOUNTS = data.discounts;
+      if (data.purchases && Array.isArray(data.purchases)) MOCK_PURCHASES = data.purchases;
+      if (data.users && Array.isArray(data.users)) MOCK_USERS = data.users;
+      // Nota: Productos y Clientes no se sobrescriben en memoria porque vienen de Supabase (o initial consts)
+      // pero esto permite que al menos las secciones "mockeadas" se restauren en la sesión actual.
   }
 };

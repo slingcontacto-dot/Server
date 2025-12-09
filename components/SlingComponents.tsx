@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Product, Customer, Order, Provider, Discount, Purchase, AppUser } from '../types';
 import { db } from '../services/db';
 
@@ -8,6 +8,7 @@ export const SlingComponents = {
   POS: ({ products, customers, onSale }: { products: Product[], customers: Customer[], onSale: () => void }) => {
      const [cart, setCart] = useState<{product: Product, qty: number}[]>([]);
      const [search, setSearch] = useState('');
+     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('CF'); // CF = Consumidor Final
      
      const addToCart = (p: Product) => {
         const exist = cart.find(x => x.product.id === p.id);
@@ -21,15 +22,13 @@ export const SlingComponents = {
      const total = cart.reduce((acc, item) => acc + (item.product.price * item.qty), 0);
 
      const handleCheckout = async () => {
-         // Default customer to first one or ID 1 for quick sale
-         const customerId = customers.length > 0 ? customers[0].id : '1'; 
          const items = cart.map(c => ({
              productId: c.product.id,
              productName: c.product.name,
              quantity: c.qty,
              priceAtSale: c.product.price
          }));
-         await db.createOrder(customerId, items);
+         await db.createOrder(selectedCustomerId, items);
          setCart([]);
          onSale();
      };
@@ -53,8 +52,17 @@ export const SlingComponents = {
           </div>
           <div className="bg-white rounded-xl shadow-lg flex flex-col h-full border border-slate-200">
              <div className="p-4 bg-slate-50 border-b border-slate-200 rounded-t-xl">
-                <h3 className="font-bold text-slate-800">Ticket Actual</h3>
-                <p className="text-xs text-slate-500">Consumidor Final</p>
+                <h3 className="font-bold text-slate-800 mb-2">Ticket Actual</h3>
+                <select 
+                    value={selectedCustomerId} 
+                    onChange={e => setSelectedCustomerId(e.target.value)}
+                    className="w-full text-sm border border-slate-300 rounded-lg p-2 bg-white outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                    <option value="CF">👤 Consumidor Final</option>
+                    {customers.map(c => (
+                        <option key={c.id} value={c.id}>🏢 {c.name}</option>
+                    ))}
+                </select>
              </div>
              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px]">
                 {cart.length === 0 && <p className="text-center text-slate-400 mt-10">Escanee o seleccione productos</p>}
@@ -387,6 +395,8 @@ export const SlingComponents = {
   },
 
   Backup: ({ data }: { data: any }) => {
+     const fileInputRef = useRef<HTMLInputElement>(null);
+
      const downloadBackup = () => {
          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
          const url = URL.createObjectURL(blob);
@@ -394,6 +404,25 @@ export const SlingComponents = {
          a.href = url;
          a.download = `backup_sling_${new Date().toISOString().split('T')[0]}.json`;
          a.click();
+     };
+
+     const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const json = JSON.parse(event.target?.result as string);
+                await db.restoreLocalState(json);
+                alert('¡Datos restaurados con éxito! El sistema se actualizará.');
+                window.location.reload();
+            } catch (error) {
+                alert('Error: El archivo no es un backup válido.');
+                console.error(error);
+            }
+        };
+        reader.readAsText(file);
      };
 
      return (
@@ -417,7 +446,21 @@ export const SlingComponents = {
                 <div className="mt-6 bg-yellow-50 border border-yellow-200 p-3 rounded text-xs text-yellow-700 mb-4 font-medium">
                     ⚠️ Advertencia: Esta acción reemplazará los datos actuales.
                 </div>
-                <button className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-900 shadow-lg">Seleccionar Archivo</button>
+                
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleRestore} 
+                    accept=".json" 
+                    className="hidden" 
+                />
+                
+                <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-900 shadow-lg"
+                >
+                    Seleccionar Archivo
+                </button>
             </div>
         </div>
      );

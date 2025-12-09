@@ -8,13 +8,24 @@ import Inventory from './components/Inventory';
 import Customers from './components/Customers';
 import Orders from './components/Orders';
 import Login from './components/Login';
+import { SlingPlaceholders } from './components/SlingComponents';
 
-// Icons as simple SVG components
+// Icons
 const IconDashboard = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>;
 const IconBox = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>;
 const IconUsers = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
-const IconCart = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
+const IconCart = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>; // Clipboard for orders
 const IconLogout = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
+const IconSearch = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+
+// New Icons
+const IconPOS = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>;
+const IconHistory = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const IconTag = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>;
+const IconTruck = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h12a1 1 0 001-1v-3a1 1 0 00-1-1H9z" /></svg>;
+const IconBriefcase = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
+const IconAdminUser = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+const IconBackup = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>;
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,208 +36,219 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const [notification, setNotification] = useState<string | null>(null);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   useEffect(() => {
     const isAuth = auth.isAuthenticated();
     setIsAuthenticated(isAuth);
   }, []);
 
-  // Función auxiliar para mostrar notificaciones temporales
   const showToast = (message: string) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Carga inicial y Suscripción Granular
   useEffect(() => {
     if (isAuthenticated) {
-      // 1. Carga inicial completa
       fetchData();
-
-      // 2. Suscripción a Realtime con lógica granular para velocidad instantánea
       const channel = supabase
         .channel('heladosupply-realtime')
-        
-        // --- PRODUCTOS ---
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products' }, (payload) => {
-            const newProduct = payload.new as Product;
-            setProducts((current) => current.map((p) => (p.id === newProduct.id ? newProduct : p)));
-            showToast(`Stock actualizado: ${newProduct.name}`);
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+            if (payload.eventType === 'DELETE') {
+              setProducts(c => c.filter(p => p.id !== payload.old.id));
+            } else if (payload.eventType === 'INSERT') {
+               setProducts(c => [...c, payload.new as Product]);
+               showToast('Nuevo producto agregado');
+            } else {
+               setProducts(c => c.map(p => p.id === payload.new.id ? payload.new as Product : p));
+               showToast(`Stock actualizado`);
+            }
         })
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'products' }, (payload) => {
-            setProducts((current) => [...current, payload.new as Product]);
-            showToast('Nuevo producto agregado remotamente');
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+             if (payload.eventType === 'INSERT') {
+               setOrders(c => [payload.new as Order, ...c]);
+               showToast(`Nuevo pedido recibido`);
+             } else if (payload.eventType === 'UPDATE') {
+               setOrders(c => c.map(o => o.id === payload.new.id ? payload.new as Order : o));
+             }
         })
-        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'products' }, (payload) => {
-            setProducts((current) => current.filter(p => p.id !== payload.old.id));
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, (payload) => {
+            if (payload.eventType === 'DELETE') {
+              setCustomers(c => c.filter(x => x.id !== payload.old.id));
+            } else if (payload.eventType === 'INSERT') {
+              setCustomers(c => [...c, payload.new as Customer]);
+              showToast('Nuevo cliente');
+            } else {
+              setCustomers(c => c.map(x => x.id === payload.new.id ? payload.new as Customer : x));
+              showToast('Cliente actualizado');
+            }
         })
-        
-        // --- PEDIDOS ---
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
-            const newOrder = payload.new as Order;
-            setOrders((current) => [newOrder, ...current]);
-            showToast(`Nuevo pedido recibido: $${newOrder.total}`);
-        })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
-            const updatedOrder = payload.new as Order;
-            setOrders((current) => current.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-        })
-        
-        // --- CLIENTES (Optimizado) ---
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'customers' }, (payload) => {
-             setCustomers((current) => [...current, payload.new as Customer]);
-             showToast('Nuevo cliente registrado');
-        })
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'customers' }, (payload) => {
-             const updated = payload.new as Customer;
-             setCustomers((current) => current.map(c => c.id === updated.id ? updated : c));
-             showToast('Datos de cliente actualizados');
-        })
-        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'customers' }, (payload) => {
-             setCustomers((current) => current.filter(c => c.id !== payload.old.id));
-        })
-        
         .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            setConnectionStatus('connected');
-            console.log('Sincronización en tiempo real activa.');
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            setConnectionStatus('error');
-            console.error('Error de conexión Realtime:', status);
-          }
+          if (status === 'SUBSCRIBED') setConnectionStatus('connected');
+          else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setConnectionStatus('error');
         });
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      return () => { supabase.removeChannel(channel); };
     }
   }, [isAuthenticated]);
 
   const fetchData = async () => {
     if (products.length === 0) setLoading(true);
     try {
-      const [p, c, o] = await Promise.all([
-        db.getProducts(),
-        db.getCustomers(),
-        db.getOrders()
-      ]);
-      setProducts(p);
-      setCustomers(c);
-      setOrders(o);
-    } catch (error) {
-      console.error("Error fetching data", error);
-    } finally {
-      setLoading(false);
-    }
+      const [p, c, o] = await Promise.all([db.getProducts(), db.getCustomers(), db.getOrders()]);
+      setProducts(p); setCustomers(c); setOrders(o);
+    } catch (error) { console.error("Error fetching data", error); } finally { setLoading(false); }
   };
 
-  const handleLogout = () => {
-    auth.logout();
-    setIsAuthenticated(false);
-  };
+  const handleLogout = () => { auth.logout(); setIsAuthenticated(false); };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
-  }
+  if (!isAuthenticated) return <Login onLogin={() => setIsAuthenticated(true)} />;
 
   const NavItem = ({ view, label, icon: Icon }: { view: View; label: string; icon: any }) => (
     <button
       onClick={() => setCurrentView(view)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-all ${
         currentView === view 
-          ? 'bg-brand-50 text-brand-700 font-medium' 
-          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+          ? 'bg-brand-600 text-white shadow-md' 
+          : 'text-slate-400 hover:bg-slate-800 hover:text-white'
       }`}
     >
       <Icon />
-      <span>{label}</span>
+      <span className="font-medium">{label}</span>
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans">
-      {/* Toast Notification */}
+    <div className="h-screen bg-slate-900 flex font-sans overflow-hidden">
+      {/* Toast */}
       {notification && (
         <div className="fixed top-4 right-4 z-50 animate-fade-in-down">
-          <div className="bg-slate-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
-            <div className="bg-green-500 rounded-full p-1">
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-3">
+            <div className="bg-brand-500 rounded-full p-1">
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
             </div>
             <span className="font-medium text-sm">{notification}</span>
           </div>
         </div>
       )}
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 fixed h-full z-10 hidden md:flex flex-col">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-brand-600">
-            <div className="bg-brand-600 text-white p-1.5 rounded-lg">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-            </div>
-            <span className="text-xl font-bold tracking-tight">HeladoSupply</span>
-          </div>
+      {/* Sidebar Sling Style */}
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-full shrink-0">
+        <div className="p-6 pb-2">
+          <h1 className="text-3xl font-bold text-brand-600 tracking-tight">Sling</h1>
+          <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">Sistema Completo</p>
         </div>
-        
-        <nav className="p-4 space-y-1 flex-1">
-          <NavItem view={View.DASHBOARD} label="Panel Principal" icon={IconDashboard} />
-          <NavItem view={View.INVENTORY} label="Inventario" icon={IconBox} />
-          <NavItem view={View.CUSTOMERS} label="Clientes" icon={IconUsers} />
-          <NavItem view={View.ORDERS} label="Pedidos" icon={IconCart} />
+
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+          <div className="space-y-1">
+            <NavItem view={View.DASHBOARD} label="Panel de Control" icon={IconDashboard} />
+            <NavItem view={View.INVENTORY} label="Inventario" icon={IconBox} />
+          </div>
+
+          <div className="space-y-1">
+            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ventas</p>
+            <NavItem view={View.POS} label="TPV (Caja)" icon={IconCart} />
+            <NavItem view={View.SALES_HISTORY} label="Historial Ventas" icon={IconHistory} />
+            <NavItem view={View.ORDERS} label="Pedidos" icon={IconTruck} />
+            <NavItem view={View.DISCOUNTS} label="Descuentos" icon={IconTag} />
+          </div>
+
+          <div className="space-y-1">
+            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Gestión</p>
+            <NavItem view={View.CUSTOMERS} label="Clientes" icon={IconUsers} />
+            <NavItem view={View.PROVIDERS} label="Proveedores" icon={IconTruck} />
+            <NavItem view={View.PURCHASES} label="Compras" icon={IconBriefcase} />
+          </div>
+
+          <div className="space-y-1">
+            <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin</p>
+            <NavItem view={View.USERS} label="Usuarios" icon={IconAdminUser} />
+            <NavItem view={View.BACKUP} label="Backup" icon={IconBackup} />
+          </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-700 transition-colors"
-          >
-            <IconLogout />
-            <span>Cerrar Sesión</span>
-          </button>
-          
-          <div className="mt-4 bg-slate-50 p-3 rounded-lg text-xs flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-            <span className="text-slate-500">
-              {connectionStatus === 'connected' ? 'En vivo (Realtime)' : 'Desconectado'}
-            </span>
+        <div className="p-4 border-t border-slate-800">
+          <div className="flex items-center gap-3 mb-4 px-2">
+             <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-xs">
+                AD
+             </div>
+             <div>
+               <p className="text-sm text-white font-medium">dueño</p>
+               <p className="text-xs text-slate-500">Dueño</p>
+             </div>
           </div>
+          <button onClick={handleLogout} className="flex items-center gap-2 text-slate-400 hover:text-white text-sm px-2">
+            <IconLogout />
+            <span>Cerrar sesión</span>
+          </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto">
-        {/* Mobile Header */}
-        <div className="md:hidden flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-          <span className="font-bold text-lg text-brand-600">HeladoSupply</span>
-          <div className="flex gap-2">
-            <button onClick={() => setCurrentView(View.DASHBOARD)} className="p-2 bg-slate-100 rounded">
-              <IconDashboard />
-            </button>
-            <button onClick={() => setCurrentView(View.ORDERS)} className="p-2 bg-slate-100 rounded">
-              <IconCart />
-            </button>
-            <button onClick={handleLogout} className="p-2 bg-slate-100 rounded text-red-500">
-              <IconLogout />
-            </button>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+        {/* Top Bar with Search */}
+        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-8 shrink-0">
+           <h2 className="text-white font-semibold text-lg hidden md:block">
+              {currentView === View.DASHBOARD && 'Panel de Control'}
+              {currentView === View.INVENTORY && 'Inventario'}
+              {currentView === View.ORDERS && 'Pedidos Especiales'}
+              {currentView === View.CUSTOMERS && 'Administración de Clientes'}
+              {currentView === View.POS && 'Terminal Punto de Venta'}
+              {currentView === View.SALES_HISTORY && 'Historial de Ventas'}
+              {currentView === View.DISCOUNTS && 'Descuentos y Promociones'}
+              {currentView === View.PROVIDERS && 'Lista de Proveedores'}
+              {currentView === View.PURCHASES && 'Órdenes de Compra (Proveedores)'}
+              {currentView === View.USERS && 'Administración de Usuarios'}
+              {currentView === View.BACKUP && 'Respaldo y Restauración'}
+           </h2>
 
-        {loading ? (
-          <div className="flex items-center justify-center h-[80vh] flex-col gap-4 text-slate-400">
-             <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
-             <p>Sincronizando datos...</p>
-          </div>
-        ) : (
-          <div className="max-w-6xl mx-auto animate-fade-in">
-            {currentView === View.DASHBOARD && <Dashboard products={products} orders={orders} />}
-            {currentView === View.INVENTORY && <Inventory products={products} onUpdate={fetchData} />}
-            {currentView === View.CUSTOMERS && <Customers customers={customers} onUpdate={fetchData} />}
-            {currentView === View.ORDERS && <Orders orders={orders} customers={customers} products={products} onUpdate={fetchData} />}
-          </div>
-        )}
-      </main>
+           <div className="flex items-center gap-4 flex-1 justify-end">
+              <div className="relative w-full max-w-md">
+                 <input 
+                   type="text" 
+                   placeholder={currentView === View.INVENTORY ? "Buscar producto..." : "Busqueda global..."}
+                   className="w-full bg-slate-950 border border-slate-700 text-slate-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-brand-600 transition-colors"
+                   value={globalSearch}
+                   onChange={(e) => setGlobalSearch(e.target.value)}
+                 />
+                 <div className="absolute left-3 top-2.5 text-slate-500">
+                    <IconSearch />
+                 </div>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer relative">
+                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+              </div>
+           </div>
+        </header>
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+           {loading ? (
+             <div className="flex items-center justify-center h-full flex-col gap-4 text-slate-500">
+                <div className="w-8 h-8 border-2 border-brand-900 border-t-brand-500 rounded-full animate-spin"></div>
+                <p>Cargando datos...</p>
+             </div>
+           ) : (
+             <div className="max-w-7xl mx-auto space-y-6">
+               {/* Core Views */}
+               {currentView === View.DASHBOARD && <Dashboard products={products} orders={orders} />}
+               {currentView === View.INVENTORY && <Inventory products={products.filter(p => p.name.toLowerCase().includes(globalSearch.toLowerCase()))} onUpdate={fetchData} />}
+               {currentView === View.CUSTOMERS && <Customers customers={customers.filter(c => c.name.toLowerCase().includes(globalSearch.toLowerCase()))} onUpdate={fetchData} />}
+               {currentView === View.ORDERS && <Orders orders={orders} customers={customers} products={products} onUpdate={fetchData} />}
+               
+               {/* New Sling Views */}
+               {currentView === View.POS && <SlingPlaceholders.POS products={products} customers={customers} onSale={() => { fetchData(); showToast('Venta realizada con éxito'); }} />}
+               {currentView === View.SALES_HISTORY && <SlingPlaceholders.SalesHistory orders={orders} />}
+               {currentView === View.DISCOUNTS && <SlingPlaceholders.Discounts />}
+               {currentView === View.PROVIDERS && <SlingPlaceholders.Providers />}
+               {currentView === View.PURCHASES && <SlingPlaceholders.Purchases />}
+               {currentView === View.USERS && <SlingPlaceholders.Users />}
+               {currentView === View.BACKUP && <SlingPlaceholders.Backup data={{products, customers, orders}} />}
+             </div>
+           )}
+        </main>
+      </div>
     </div>
   );
 }

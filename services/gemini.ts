@@ -56,8 +56,23 @@ export const analyzeBusinessData = async (products: Product[], recentOrders: Ord
       contents: prompt,
     });
     return response.text || "No se pudo generar el análisis.";
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    return "Ocurrió un error al contactar al asistente AI. Verifique su API Key.";
+  } catch (error: any) {
+    console.error("Gemini Error Full Object:", error);
+    
+    let errorMessage = "Ocurrió un error al contactar al asistente AI.";
+    
+    if (error.message) {
+        if (error.message.includes("API key not valid") || error.message.includes("400")) {
+            errorMessage = "⚠️ Error: La API Key no es válida. Verifique que la copió correctamente en Vercel sin espacios extra.";
+        } else if (error.message.includes("403")) {
+            errorMessage = "⚠️ Error 403: Su API Key no tiene permisos o el servicio no está habilitado en su cuenta de Google Cloud.";
+        } else if (error.message.includes("429")) {
+            errorMessage = "⚠️ Error 429: Se ha excedido la cuota gratuita de consultas a la IA por hoy.";
+        } else {
+            errorMessage = `⚠️ Error del sistema: ${error.message}`;
+        }
+    }
+    
+    return errorMessage;
   }
 };

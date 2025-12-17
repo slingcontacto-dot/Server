@@ -2,16 +2,13 @@ import { Product, Customer, Order, OrderItem, Provider, Discount, Purchase } fro
 import { supabase } from './supabase';
 
 export const db = {
-  // --- PRODUCTOS (Inventario) ---
+  // --- PRODUCTOS ---
   getProducts: async (): Promise<Product[]> => {
     try {
       const { data, error } = await supabase.from('products').select('*').order('name');
       if (error) throw error;
       return data as Product[];
-    } catch (e) { 
-      console.error("Error fetching products", e);
-      return []; 
-    }
+    } catch (e) { return []; }
   },
 
   saveProduct: async (product: Product): Promise<void> => {
@@ -28,10 +25,7 @@ export const db = {
       const { data, error } = await supabase.from('customers').select('*').order('name');
       if (error) throw error;
       return data as Customer[];
-    } catch (e) { 
-      console.error("Error fetching customers", e);
-      return []; 
-    }
+    } catch (e) { return []; }
   },
 
   saveCustomer: async (customer: Customer): Promise<void> => {
@@ -42,16 +36,13 @@ export const db = {
     try { await supabase.from('customers').delete().eq('id', id); } catch (e) { console.error(e); }
   },
 
-  // --- PEDIDOS (Ventas) ---
+  // --- PEDIDOS ---
   getOrders: async (): Promise<Order[]> => {
     try {
       const { data, error } = await supabase.from('orders').select('*').order('date', { ascending: false });
       if (error) throw error;
       return data as Order[];
-    } catch (e) { 
-      console.error("Error fetching orders", e);
-      return []; 
-    }
+    } catch (e) { return []; }
   },
 
   createOrder: async (customerId: string, items: OrderItem[]): Promise<Order> => {
@@ -61,9 +52,7 @@ export const db = {
          const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
          if (customer) customerName = customer.name;
       }
-
       const total = items.reduce((acc, item) => acc + (item.priceAtSale * item.quantity), 0);
-      
       const newOrder: Order = {
         id: Date.now().toString(),
         customerId,
@@ -73,24 +62,13 @@ export const db = {
         total,
         status: 'completed'
       };
-
-      const { error } = await supabase.from('orders').insert(newOrder);
-      if (error) throw error;
-
-      // Descontar stock
+      await supabase.from('orders').insert(newOrder);
       for (const item of items) {
-         // Obtener stock actual para asegurar atomicidad (idealmente usar RPC, pero esto funciona para este nivel)
          const { data: p } = await supabase.from('products').select('stock').eq('id', item.productId).single();
-         if (p) {
-             await supabase.from('products').update({stock: p.stock - item.quantity}).eq('id', item.productId);
-         }
+         if (p) await supabase.from('products').update({stock: p.stock - item.quantity}).eq('id', item.productId);
       }
-
       return newOrder;
-    } catch (error) {
-      console.error("Error creating order", error);
-      throw error;
-    }
+    } catch (error) { throw error; }
   },
 
   deleteOrder: async (id: string): Promise<void> => {
@@ -144,28 +122,17 @@ export const db = {
       try { await supabase.from('purchases').upsert(purchase); } catch (e) { console.error(e); }
   },
 
-  // --- RESTAURAR DATOS (A LA NUBE) ---
+  // --- RESTAURAR DATOS ---
   restoreLocalState: async (data: any): Promise<void> => {
-      // Esta función toma el JSON y lo sube a Supabase
       try {
-          if (data.products && data.products.length > 0) {
-              await supabase.from('products').upsert(data.products);
-          }
-          if (data.customers && data.customers.length > 0) {
-              await supabase.from('customers').upsert(data.customers);
-          }
-          if (data.providers && data.providers.length > 0) {
-              await supabase.from('providers').upsert(data.providers);
-          }
-          if (data.discounts && data.discounts.length > 0) {
-              await supabase.from('discounts').upsert(data.discounts);
-          }
-          if (data.orders && data.orders.length > 0) {
-              await supabase.from('orders').upsert(data.orders);
-          }
-          console.log("Restauración a la nube completada");
+          if (data.products && data.products.length > 0) await supabase.from('products').upsert(data.products);
+          if (data.customers && data.customers.length > 0) await supabase.from('customers').upsert(data.customers);
+          if (data.providers && data.providers.length > 0) await supabase.from('providers').upsert(data.providers);
+          if (data.discounts && data.discounts.length > 0) await supabase.from('discounts').upsert(data.discounts);
+          if (data.orders && data.orders.length > 0) await supabase.from('orders').upsert(data.orders);
+          if (data.purchases && data.purchases.length > 0) await supabase.from('purchases').upsert(data.purchases);
       } catch (error) {
-          console.error("Error al restaurar backup en la nube:", error);
+          console.error("Error en restauración:", error);
           throw error;
       }
   }

@@ -11,7 +11,6 @@ const Inventory: React.FC<InventoryProps> = ({ products, onUpdate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
-  // Form State
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '', category: 'Otros', price: 0, stock: 0, minStock: 0, unit: ''
   });
@@ -41,7 +40,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, onUpdate }) => {
     
     await db.saveProduct(productToSave);
     setIsModalOpen(false);
-    onUpdate(); // Trigger refresh (aunque realtime lo hará también)
+    onUpdate();
   };
 
   const handleDelete = async (id: string) => {
@@ -107,14 +106,12 @@ const Inventory: React.FC<InventoryProps> = ({ products, onUpdate }) => {
                     <button 
                       onClick={() => handleOpenModal(p)}
                       className="text-slate-400 hover:text-brand-600 transition-colors"
-                      title="Editar"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 00 2 2h11a2 2 0 00 2-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     </button>
                     <button 
                       onClick={() => handleDelete(p.id)}
                       className="text-slate-400 hover:text-red-600 transition-colors"
-                      title="Eliminar"
                     >
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
@@ -126,7 +123,6 @@ const Inventory: React.FC<InventoryProps> = ({ products, onUpdate }) => {
         </table>
       </div>
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 animate-fade-in-up">
@@ -155,15 +151,15 @@ const Inventory: React.FC<InventoryProps> = ({ products, onUpdate }) => {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Precio</label>
-                  <input required type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none" />
+                  <input required type="text" inputMode="decimal" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value as any})} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Stock Actual</label>
-                  <input required type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: Number(e.target.value)})} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none" />
+                  <input required type="text" inputMode="numeric" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value as any})} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Stock Min.</label>
-                  <input required type="number" value={formData.minStock} onChange={e => setFormData({...formData, minStock: Number(e.target.value)})} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none" />
+                  <input required type="text" inputMode="numeric" value={formData.minStock} onChange={e => setFormData({...formData, minStock: e.target.value as any})} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-brand-500 outline-none" />
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
